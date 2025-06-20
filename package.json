@@ -1,0 +1,44 @@
+{
+  "name": "api-rest-bibliotheque",
+  "version": "1.0.0",
+  "description": "### `students` – Élèves",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "node build/index.js",
+    "start": "nodemon index.ts",
+    "generate": "npx prisma generate",
+    "build": "tsc",
+    "push": "npx prisma db push"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Worketyamo-Students/api-presence.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Worketyamo-Students/api-rest-bibliotheque/issues"
+  },
+  "homepage": "https://github.com/Worketyamo-Students/api-rest-bibliotheque#readme",
+  "devDependencies": {
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^24.0.3",
+    "express": "^5.1.0",
+    "morgan": "^1.10.0",
+    "nodemon": "^3.1.10",
+    "prisma": "^6.10.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.9.0",
+    "@types/body-parser": "^1.19.6",
+    "@types/express": "^5.0.3",
+    "@types/nodemon": "^1.19.6",
+    "body-parser": "^2.2.0",
+    "dotenv": "^16.5.0"
+  }
+}
