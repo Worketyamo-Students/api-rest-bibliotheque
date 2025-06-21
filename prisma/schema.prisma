@@ -20,6 +20,7 @@ model Book {
   publishedAt DateTime   @default(now())
   isbn        String     @unique
   description String?
+  etat String @default("disponible")
   emprunts    emprunts[]
   notifications notification[]
   
