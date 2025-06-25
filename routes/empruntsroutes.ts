@@ -51,7 +51,7 @@ loan.post("/create", asyncHandler(async (req: Request, res: Response, next: Next
       }
 
     },));
-loan.get("/:id/return", loanctl.getreturnedloan);
+loan.put("/:id/return", loanctl.getreturnedloan);
 loan.get("/user/:userId", asyncHandler(async (req: Request, res: Response) => {
         const { userId } = req.params;
         if (!userId) {
