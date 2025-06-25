@@ -3,7 +3,7 @@ import loanctl from "../controllers/emprunts.ts"
 import { asyncHandler } from "../asynchandler.ts";
 import { Request, Response , NextFunction} from 'express';
 import { PrismaClient } from '../generated/prisma';
-import {emprunts , User} from "../generated/prisma"
+import {emprunts} from "../generated/prisma"
 
 
 const client = new PrismaClient();
@@ -28,7 +28,7 @@ loan.post("/create", asyncHandler(async (req: Request, res: Response, next: Next
                             userId,
                             bookId,
                             createdAt: new Date(),
-                            updatedAt: new Date()
+                            dateretour: new Date()
                         }
                     })
                     await client.book.update({
@@ -51,10 +51,9 @@ loan.post("/create", asyncHandler(async (req: Request, res: Response, next: Next
       }
 
     },));
-loan.get("/id/return", loanctl.getreturnedloan);
+loan.get("/:id/return", loanctl.getreturnedloan);
 loan.get("/user/:userId", asyncHandler(async (req: Request, res: Response) => {
         const { userId } = req.params;
-        const {name }:User = req.body
         if (!userId) {
             return res.status(400).json({ msg: "Invalid user ID" });
         }
@@ -66,7 +65,7 @@ loan.get("/user/:userId", asyncHandler(async (req: Request, res: Response) => {
             if (loans.length === 0) {
                 return res.status(404).json({ msg: "No loans found for this user" });
             }
-            res.status(200).json({msg:`la liste des emprunts de l'utilisateur ${name} est : `, loans});
+            res.status(200).json({msg:`la liste des emprunts de cet utilisateur est : `, loans});
         } catch (error) {
             console.error("Error fetching loans:", error);
             res.status(500).json({ msg: "Internal server error" });

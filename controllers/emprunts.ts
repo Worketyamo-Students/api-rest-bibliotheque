@@ -51,7 +51,7 @@ const loanctl = {
                             userId,
                             bookId,
                             createdAt: new Date(),
-                            updatedAt: new Date()
+                            dateretour: new Date()
                         }
                     })
                     await client.book.update({
@@ -79,22 +79,22 @@ const loanctl = {
         const {id} = req.params;
         const findloan = await client.emprunts.findUnique({
             where : {
-                id
+                id : id
             }
         })
         if(!findloan){
             res.status(200).json({msg : "loan not found"})
         }
-        if(findloan?.updatedAt){
+        if(findloan?.dateretour){
             res.status(200).json({msg : "l'emprunt introuvable"})
   
         }
         await client.emprunts.update({
             where : {
-                id 
+                id : id
             },
             data : {
-                updatedAt : new Date()
+                dateretour : new Date()
             }
         })
         await client.book.update({
