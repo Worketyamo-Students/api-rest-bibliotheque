@@ -18,7 +18,7 @@ model Book {
   title       String
   author      String
   publishedAt DateTime   @default(now())
-  isbn        String     @unique
+  isbn        String     
   description String?
   etat String @default("disponible")
   emprunts    emprunts[]

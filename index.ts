@@ -10,7 +10,7 @@ app.use(bodyParser.json());
 app.use(morgan("dev"))
 
 app.use("/user", user);
-app.use("/books", book);
+app.use("/book", book);
 app.use("/loan" , loan)
 
 const port = process.env.PORT;

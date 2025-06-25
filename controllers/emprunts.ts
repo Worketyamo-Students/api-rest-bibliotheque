@@ -1,11 +1,38 @@
-import { emprunts } from './../generated/prisma/index.d';
 
 import { Request, Response , NextFunction} from 'express';
-import { PrismaClient } from '../generated/prisma';
+import { PrismaClient, User } from '../generated/prisma';
 import {emprunts} from "../generated/prisma"
+// import nodemailer from 'nodemailer';
 
 const client = new PrismaClient();
+    // async function sendMail(usermail: string, titrelivre: string) {
+    //     const transporter = nodemailer.createTransport({
+    //         service: 'gmail',
+    //         auth:{
+    //             user : "",
+    //             pass : "",
+    //         },
+    //     });
+    // //option de l'email
+    //     const mailoption = {
+    //         from : 'votremail@gmail.com',
+    //         to : usermail,
+    //         subject : 'emprunt de livre',
+    //         text : `le livre  ${titrelivre} que vous avez emprunte est desormais disponible`
+    //     };
+    //     //envoie de l'email
+    //     try {
+    //         const info = await transporter.sendMail(mailoption)
+    //         console.log("email envoye" , info.response)
+    //     }
+    //     catch (error) {
+    //         console.error("Error sending email:", error);
+    //     }
+    // }
+
 const loanctl = {
+
+
     createloan: async (req: Request, res: Response, next: NextFunction) => {
     const {userId , bookId }: emprunts = req.body
       if (!userId || !bookId) {
@@ -77,6 +104,26 @@ const loanctl = {
             }
         })
 
+    },
+    getloansbyuser : async (req: Request, res: Response) => {
+        const { userId } = req.params;
+        const {name }:User = req.body
+        if (!userId) {
+            return res.status(400).json({ msg: "Invalid user ID" });
+        }
+        try {
+            const loans = await client.emprunts.findMany({
+                where: { userId },
+                include: { book: true } // Include book details in the response
+            });
+            if (loans.length === 0) {
+                return res.status(404).json({ msg: "No loans found for this user" });
+            }
+            res.status(200).json({msg:`la liste des emprunts de l'utilisateur ${name} est : `, loans});
+        } catch (error) {
+            console.error("Error fetching loans:", error);
+            res.status(500).json({ msg: "Internal server error" });
+        }
     }
 }
 export default loanctl; 

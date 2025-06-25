@@ -1,12 +1,13 @@
 
-import { Request, Response} from 'express';
+import { Request, Response , NextFunction} from 'express';
 import { PrismaClient } from '../generated/prisma';
 import {Book} from "../generated/prisma"
 const client = new PrismaClient();
+
 const bookctl = {
     createbook: async (req: Request, res: Response) => {
-    const {title , author , description,publishedAt, isbn }: Book = req.body
-      if (!title || !author || !description || !publishedAt || !isbn) {
+    const {title , author , description,publishedAt, isbn , etat }: Book = req.body
+      if (!title || !author || !description || !publishedAt || !isbn || !etat) {
          res.status(400).json({ msg: "veuillez remplir tout les champs" })
       } else {
          try {
@@ -16,7 +17,8 @@ const bookctl = {
                 author,
                 description,
                 publishedAt,
-                isbn
+                isbn,
+                etat
             }
          })
 
@@ -102,7 +104,7 @@ const bookctl = {
         
     },
 
-        deletebook : async (req:Request , res : Response) =>{
+        deletebook : async (req:Request , res : Response , next : NextFunction) =>{
         const {bookId } = req.params
 
         if(!bookId){
@@ -122,6 +124,7 @@ const bookctl = {
             }
         }
         catch(error){
+            next
             console.error("Error fetching books:", error)
             res.status(500).json({ msg: "Internal server error" })
 

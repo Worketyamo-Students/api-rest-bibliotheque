@@ -55,8 +55,8 @@ const userctl = {
                     where: { email }
                 });
 
-                if (!user || user.password !== password) {
-                    return next(new Error("Invalid email or password"));
+                if (!user || user.password !== password ) {
+                    throw new Error("Invalid email or password");
                 }
 
                 res.status(200).json({
@@ -128,9 +128,9 @@ const userctl = {
                 }
             })
             if (user) {
-                res.status(200).json({ msg: "teacher deleted successfully" })
+                res.status(200).json({ msg: "user deleted successfully" })
             } else {
-                res.status(404).json({ msg: "teacher not found" })
+                res.status(404).json({ msg: "user not found" })
             }
         }
 
