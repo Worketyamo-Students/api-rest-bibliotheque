@@ -21,13 +21,18 @@ const userctl = {
         
             try {
                 const cryptpassword = await crypt.hash(password, 10);
+                
+                const existingUser = await client.user.findUnique({ where: { email } });
+                if (existingUser) {
+                    return res.status(400).json({ msg: "cet utilisateur existe deja" });
+                }
                 const user = await client.user.create({
                     data: {
                         name,
                         email,
                         password: cryptpassword
                     }
-                })
+                });
 
                 console.log(user)
                 res.status(201).json({
@@ -48,7 +53,7 @@ const userctl = {
 
         //generate token
         if (!email || !password) {
-            res.status(400).json({ msg: "veuillez remplir tout les champs" });
+            res.status(400).json({ msg: "veuillez remplir tous les champs" });
         } else {
             try {
                 const user = await client.user.findUnique({
@@ -98,12 +103,14 @@ const userctl = {
         }
 
         try {
+            const cryptpassword = await crypt.hash(password, 10);
+
             const user = await client.user.update({
                 where: { userId },
                 data: {
                     name,
                     email,
-                    password // Hash password if provided
+                    password : cryptpassword // Hash password if provided
                 }
             });
 

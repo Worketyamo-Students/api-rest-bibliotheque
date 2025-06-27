@@ -1,34 +1,36 @@
 
 import { Request, Response , NextFunction} from 'express';
-import { PrismaClient, User } from '../generated/prisma';
+import { PrismaClient, User} from '../generated/prisma';
 import {emprunts} from "../generated/prisma"
+import nodemailer from 'nodemailer';
 // import nodemailer from 'nodemailer';
 
 const client = new PrismaClient();
-    // async function sendMail(usermail: string, titrelivre: string) {
-    //     const transporter = nodemailer.createTransport({
-    //         service: 'gmail',
-    //         auth:{
-    //             user : "",
-    //             pass : "",
-    //         },
-    //     });
-    // //option de l'email
-    //     const mailoption = {
-    //         from : 'votremail@gmail.com',
-    //         to : usermail,
-    //         subject : 'emprunt de livre',
-    //         text : `le livre  ${titrelivre} que vous avez emprunte est desormais disponible`
-    //     };
-    //     //envoie de l'email
-    //     try {
-    //         const info = await transporter.sendMail(mailoption)
-    //         console.log("email envoye" , info.response)
-    //     }
-    //     catch (error) {
-    //         console.error("Error sending email:", error);
-    //     }
-    // }
+    async function sendMail(usermail: string, titrelivre: string) {
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth:{
+                user : process.env.EMAIL_USER, // Assurez-vous de définir ces variables d'environnement
+                pass : process.env.EMAIL_PASS, // Assurez-vous de définir ces variables d'environnement
+                
+            },
+        });
+    //option de l'email
+        const mailoption = {
+            from : 'votremail@gmail.com',
+            to : usermail,
+            subject : 'emprunt de livre',
+            text : `le livre  ${titrelivre} que vous avez emprunte est desormais disponible`
+        };
+        //envoie de l'email
+        try {
+            const info = await transporter.sendMail(mailoption)
+            console.log("email envoye" , info.response)
+        }
+        catch (error) {
+            console.error("Error sending email:", error);
+        }
+    }
 
 const loanctl = {
 
@@ -80,13 +82,15 @@ const loanctl = {
         const findloan = await client.emprunts.findUnique({
             where : {
                 id : id
-            }
+            },
+            include: { user: true, book: true }
         })
         if(!findloan){
-            res.status(200).json({msg : "loan not found"})
+            res.status(404).json({msg : "loan not found"})
         }
         if(findloan?.dateretour){
-            res.status(200).json({msg : "l'emprunt introuvable"})
+            res.status(200).json({msg : "le livre a deja ete retourne"})
+            await sendMail(findloan.user.email, findloan.book.title);
   
         }
         await client.emprunts.update({
@@ -95,7 +99,7 @@ const loanctl = {
             },
             data : {
                 dateretour : new Date()
-            }
+            }   
         })
         await client.book.update({
             where : {bookId : findloan?.bookId},
