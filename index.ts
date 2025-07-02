@@ -5,9 +5,12 @@ import user from "./routes/userroutes.ts";
 import book from "./routes/bookroute.ts";
 import loan from "./routes/empruntsroutes.ts"
 import morgan from "morgan"
+import cookieParser from "cookie-parser";
 const app = express();
+
+app.use(cookieParser());
 app.use(bodyParser.json());
-app.use(morgan("dev"))
+app.use(morgan("dev"));
 
 app.use("/user", user);
 app.use("/book", book);

@@ -1,8 +1,11 @@
 
+
 import { Request, Response  , NextFunction} from 'express';
 import { PrismaClient } from '../generated/prisma';
 import {User} from "../generated/prisma"
+import {signrefreshToken, signToken , validateentries} from "../asynchandler.ts"
 import crypt from 'bcrypt'
+
 // import jwt from 'jsonwebtoken';
 // import dotenv from 'dotenv';
 const client = new PrismaClient();
@@ -10,41 +13,39 @@ const client = new PrismaClient();
 const userctl = {
     createUser: async (req: Request, res: Response , next : NextFunction) => {
     const { name , email , password}: User = req.body
-      if (!name || !email || !password) {
-         res.status(400).json({ msg: "veuillez remplir tout les champs" })
-      } else {
-            // const emailRegex: RegExp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-            // if (!emailRegex.test(email)) {
-            //     return res.status(400).json({ msg: "Email invalide" });
-                
-            // }
-        
             try {
-                const cryptpassword = await crypt.hash(password, 10);
-                
-                const existingUser = await client.user.findUnique({ where: { email } });
-                if (existingUser) {
-                    return res.status(400).json({ msg: "cet utilisateur existe deja" });
+                const { error } = validateentries.validate(req.body);
+                if (error){
+                    return res.status(400).json({ msg: error.message });
                 }
-                const user = await client.user.create({
-                    data: {
-                        name,
-                        email,
-                        password: cryptpassword
+                else{
+                    
+                    const cryptpassword = await crypt.hash(password, 10);
+                    const existingUser = await client.user.findUnique({ where: { email } });
+                    if (existingUser) {
+                        return res.status(400).json({ msg: "cet utilisateur existe deja" });
                     }
-                });
+                    const user = await client.user.create({
+                        data: {
+                            name,
+                            email,
+                            password: cryptpassword
+                        }
+                    });
 
-                console.log(user)
-                res.status(201).json({
-                msg: `user ${user.name} cree avec succes`
-                })
-            next();
+                    console.log(user)
+                    res.status(201).json({
+                    msg: `user ${user.name} cree avec succes`
+                    })
+                    next();
+
+                }
             } 
             catch (error) {
                 next(error);
                 res.status(500).json({ msg: "Internal server error" })
             }
-      }
+      
 
     },
     loginUser: async (req: Request, res: Response , next : NextFunction) => {
@@ -60,14 +61,22 @@ const userctl = {
                     where: { email }
                 });
 
-                if (!user || user.password !== password ) {
+                if (!user || !(await crypt.compare(password, user.password))) {
                     throw new Error("Invalid email or password");
                 }
+                else{
+                    const refreshtoken = await signrefreshToken(user.email);
+                    res.cookie("cookie-wyx", refreshtoken)
+                    const token = await signToken(user.email);
+                    console.log(token)
+                    
+                    res.status(200).json({
+                        msg: `bienvenue ${user.name}`,
+                        user: { id: user.userId, name: user.name, email: user.email },
+                        accessToken: token
+                    });
 
-                res.status(200).json({
-                    msg: "Login successful",
-                    user: { id: user.userId, name: user.name, email: user.email }
-                });
+                }
                 //generer le token jwt
 
             } catch (error) {
@@ -81,47 +90,55 @@ const userctl = {
         if (!userId) {
             return res.status(400).json({ msg: "Invalid user ID" });
         }
-        try {
-            const user = await client.user.findUnique({
-                where: { userId }
-            });
-            if (!user) {
-                return res.status(404).json({ msg: "User not found" });
+        else {
+            try {
+                const user = await client.user.findUnique({
+                    where: { userId }
+                });
+                if (!user) {
+                    return res.status(404).json({ msg: "User not found" });
+                }
+                res.status(200).json(user);
+            } catch (error) {
+                console.error("Error fetching user:", error);
+                res.status(500).json({ msg: "Internal server error" });
             }
-            res.status(200).json(user);
-        } catch (error) {
-            console.error("Error fetching user:", error);
-            res.status(500).json({ msg: "Internal server error" });
+
         }
     },
     updateUserProfile: async (req: Request, res: Response, next: NextFunction) => {
         const { userId } = req.params;
         const { name, email, password }: User = req.body;
 
-        if (!userId || !name || !email) {
+        if (!userId) {
+            return res.status(400).json({ msg: "No ID provided" });
+        }
+        else if (!name || !email) {
             return res.status(400).json({ msg: "veuillez remplir tout les champs" });
         }
+        else{
+            try {
+                const cryptpassword = await crypt.hash(password, 10);
 
-        try {
-            const cryptpassword = await crypt.hash(password, 10);
+                const user = await client.user.update({
+                    where: { userId },
+                    data: {
+                        name,
+                        email,
+                        password : cryptpassword // Hash password if provided
+                    }
+                });
 
-            const user = await client.user.update({
-                where: { userId },
-                data: {
-                    name,
-                    email,
-                    password : cryptpassword // Hash password if provided
-                }
-            });
+                res.status(200).json({
+                    msg: `User ${user.name} updated successfully`,
+                    user
+                });
+                next()
+            } catch (error) {
+                next(error)
+                res.status(500).json({ msg: "Internal server error" });
+            }
 
-            res.status(200).json({
-                msg: `User ${user.name} updated successfully`,
-                user
-            });
-            next()
-        } catch (error) {
-            next(error)
-            res.status(500).json({ msg: "Internal server error" });
         }
     },
     deleteUserProfile: async (req: Request, res: Response) => {
